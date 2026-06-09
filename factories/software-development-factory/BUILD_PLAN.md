@@ -1,82 +1,84 @@
 # Build Plan: Software Development Factory
 
 Implements [`requirements/software-development-factory.md`](../../requirements/software-development-factory.md)
-as a standalone LangGraph project. TDD: red scaffold first, then green.
+as a standalone **deepagents** project with a **CopilotKit** UI. TDD: red
+scaffold first, then green.
 
-## Graph design
+**Produces:** new software — a reviewed, tested draft pull request.
 
-State graph modeling the plan → implement → review → verify loop.
+## Agent design
 
-### State (`state.py`)
+One orchestrator deep agent whose **sub-agents** are the requirement-doc roles.
+Planning (`write_todos`), the code workspace (virtual filesystem), and approval
+gates (HITL interrupts) come from `deepagents`.
 
 ```
-task: str                       # the brief / ticket / bug
-repo_context: dict              # language, conventions, paths
-plan: Plan | None               # steps + files to touch
-approvals: dict[str, bool]      # {"plan": bool}
-diff: str | None                # proposed changes
-tests: list[str]                # added/updated test files
-test_results: TestRun | None    # build/lint/test outcome
-review: Review | None           # {status: approved|changes, comments}
-pr_url: str | None
-iteration: int                  # review-loop counter (bounds retries)
+build_agent() -> create_deep_agent(
+    model        = <Claude model>,
+    system_prompt= "Ship a reviewed, tested change for the given task. Plan
+                    first; never open a PR without passing tests and human
+                    approval of the plan.",
+    tools        = [read_repo, write_file, run_tests, run_lint, open_pr],
+    subagents    = [planner, implementer, test_engineer, reviewer,
+                    verifier, integrator],
+)
 ```
 
-### Nodes (one agent role each, `nodes/`)
+### Sub-agents (`subagents.py`)
 
-| Node | Role | Output keys |
+| Sub-agent | Role | Tools |
 | --- | --- | --- |
-| `planner` | Decompose task into a plan + files | `plan` |
-| `plan_gate` | `interrupt` for human approval on large changes | `approvals["plan"]` |
-| `implementer` | Write code matching conventions | `diff` |
-| `test_engineer` | Add/update tests (fail-before, pass-after) | `tests` |
-| `reviewer` | Correctness/quality pass on the diff | `review` |
-| `verifier` | Run build/lint/tests; run app where feasible | `test_results` |
-| `integrator` | Open draft PR with summary, plan, evidence | `pr_url` |
+| `planner` | Decompose task into a plan + files to touch | filesystem |
+| `implementer` | Write code matching conventions | `read_repo`, `write_file` |
+| `test_engineer` | Add/update tests (fail-before, pass-after) | `write_file`, `run_tests` |
+| `reviewer` | Correctness/quality pass on the diff | filesystem |
+| `verifier` | Run build/lint/tests; run app where feasible | `run_tests`, `run_lint` |
+| `integrator` | Open the draft PR with summary + plan + evidence | `open_pr` |
 
-### Edges / routing (`graph.py`, `guardrails.py`)
+### Artifact & plan
 
-```
-START → planner → plan_gate → implementer → test_engineer → reviewer
-reviewer  --changes_requested--> implementer        (loop, bounded by iteration)
-reviewer  --approved-----------> verifier
-verifier  --failed-------------> implementer         (loop)
-verifier  --passed-------------> integrator → END
-```
+- The plan is the deep agent's **todo list** (`write_todos`).
+- The change (diff, new files, tests) lives in the **virtual filesystem**.
+- The deliverable is a **draft PR** opened by `open_pr`.
 
-- `plan_gate` is a hard interrupt; `integrator` is unreachable until
-  `approvals["plan"]` is true (FR3, guardrail).
-- `requires_human_review(state)` forces a security-review detour for
-  auth/crypto/data changes.
+### Approval gates (`gates.py`)
+
+- HITL interrupt **before `open_pr`** — human owns the merge boundary (FR3, FR7).
+- Optional interrupt before large refactors (security review detour for
+  auth/crypto/data changes).
+
+## UI (CopilotKit)
+
+- `useCoAgent` streams the todo list and current sub-agent so the user watches
+  plan → implement → review → verify live.
+- `useCoAgentStateRender` renders the diff and test results as they land.
+- The `open_pr` interrupt renders an **approve/deny** card before the PR opens.
 
 ## Failing tests (red)
 
-`python/tests/`
-- `test_state.py` — state schema accepts a valid task; rejects missing `task`.
-- `test_graph.py` (RED until graph wired):
-  - graph compiles and exposes the 7 nodes;
-  - `reviewer` with `changes` routes back to `implementer`;
-  - `verifier` failure routes back to `implementer`;
-  - `integrator` is not reached when `approvals["plan"]` is false (interrupt);
-  - `iteration` bound stops infinite review loops.
-- `test_nodes.py` (RED until nodes implemented): each node, given minimal input
-  state, returns its declared output key(s). Stubs raise `NotImplementedError`.
+`agent/tests/`
+- `test_agent.py` (RED until wired): `build_agent()` returns a deep agent
+  configured with the six named sub-agents and the expected tools.
+- `test_tools.py` (RED): each tool (`run_tests`, `open_pr`, …) honors its
+  signature; stubs raise `NotImplementedError`.
+- `test_gates.py` (RED): invoking the agent interrupts **before** `open_pr` and
+  does not open a PR without approval.
 
-`typescript/test/`
-- `schema.test.ts` — `Plan`/`Review`/`TestRun` zod schemas round-trip the Python
-  JSON contract; reject malformed payloads.
-- `client.test.ts` — CLI parses a task arg and calls the graph endpoint with the
-  right shape (stub client throws → RED).
+`ui/test/`
+- `agent-state.test.ts` — zod schema for `{todos, diff, testResults, prUrl}`
+  round-trips the Python state; rejects malformed payloads.
+- `hitl.test.ts` — the approval card renders when the agent emits the `open_pr`
+  interrupt (stub UI → RED).
 
 ## Green milestones
 
-1. Wire `build_graph()` + routing → structure/routing/interrupt tests pass.
-2. Implement `planner`, then `implementer`/`test_engineer`, then `reviewer`,
-   `verifier`, `integrator` → node tests pass one by one.
-3. Replace stub repo/CI/GitHub calls with real adapters behind interfaces;
-   keep the merge gate human-owned (FR7).
+1. Assemble `build_agent()` + gate config → agent/gate tests pass with stubs.
+2. Implement tools, then role prompts (`planner` → `implementer`/`test_engineer`
+   → `reviewer`/`verifier` → `integrator`) → tool/behavior tests pass.
+3. Wire CopilotKit to live state; connect real GitHub/CI adapters behind the
+   tool interfaces; keep the PR/merge gate human-owned.
 
 ## Integrations
 
 GitHub (draft PRs, comments), CI provider, issue tracker, isolated build/test
-sandbox. All behind interfaces so tests use fakes.
+sandbox — all behind tool interfaces so tests use fakes.

@@ -1,78 +1,85 @@
 # Build Plan: Content Creation Factory
 
 Implements [`requirements/content-creation-factory.md`](../../requirements/content-creation-factory.md)
-as a standalone LangGraph project. TDD: red scaffold first, then green.
+as a standalone **deepagents** project with a **CopilotKit** UI. TDD: red
+scaffold first, then green.
 
-## Graph design
+**Produces:** new content — publish-ready pieces plus channel variants.
 
-State graph modeling the research → draft → edit → fact-check → format loop.
+## Agent design
 
-### State (`state.py`)
+One orchestrator deep agent whose **sub-agents** are the requirement-doc roles.
+Planning (`write_todos`), the draft workspace (virtual filesystem), and the
+publish gate (HITL interrupt) come from `deepagents`.
 
 ```
-brief: Brief                    # topic, goal, audience, channel, length/format
-brand: BrandKit                 # voice/tone, style rules, terminology, do/don't
-sources: list[Source]           # gathered + cited references
-outline: Outline | None
-draft: str | None
-edits: str | None               # editor-revised draft
-factcheck: FactCheck | None     # {flags: [...], all_supported: bool}
-variants: dict[str, str]        # channel-specific repurposes
-approvals: dict[str, bool]      # {"publish": bool}
-iteration: int                  # fact-check loop counter
+build_agent() -> create_deep_agent(
+    model        = <Claude model>,
+    system_prompt= "Turn the brief into publish-ready, on-brand, fact-checked
+                    content. Ground every claim in a source; never publish
+                    without human approval.",
+    tools        = [web_search, fetch_url, write_file, check_style, publish],
+    subagents    = [researcher, strategist, writer, editor,
+                    fact_checker, formatter],
+)
 ```
 
-### Nodes (one agent role each, `nodes/`)
+### Sub-agents (`subagents.py`)
 
-| Node | Role | Output keys |
+| Sub-agent | Role | Tools |
 | --- | --- | --- |
-| `researcher` | Gather + cite sources, build factual outline | `sources`, `outline` |
-| `strategist` | Set angle, hook, channel structure | `outline` (refined) |
-| `writer` | Draft in brand voice | `draft` |
-| `editor` | Clarity/flow, enforce style guide | `edits` |
-| `fact_checker` | Verify claims vs sources, flag unsupported | `factcheck` |
-| `publish_gate` | `interrupt` for human approval before publish | `approvals["publish"]` |
-| `formatter` | Repurpose into channel variants + metadata | `variants` |
+| `researcher` | Gather + cite sources, build factual outline | `web_search`, `fetch_url` |
+| `strategist` | Set angle, hook, channel structure | filesystem |
+| `writer` | Draft in brand voice | `write_file` |
+| `editor` | Clarity/flow, enforce style guide | `check_style` |
+| `fact_checker` | Verify claims vs sources, flag unsupported | filesystem |
+| `formatter` | Repurpose into channel variants + metadata | `write_file` |
 
-### Edges / routing (`graph.py`, `guardrails.py`)
+### Artifact & plan
 
-```
-START → researcher → strategist → writer → editor → fact_checker
-fact_checker --has_flags--> writer            (loop, bounded by iteration)
-fact_checker --all_supported--> publish_gate → formatter → END
-```
+- The plan is the deep agent's **todo list** (`write_todos`).
+- Sources, outline, draft, and variants live in the **virtual filesystem**.
+- The deliverable is the **approved piece + channel variants**.
 
-- `publish_gate` is a hard interrupt; no publish/format output is released until
-  `approvals["publish"]` is true (FR7, guardrail).
-- `unsupported_claims(state)` routes back to `writer`; unsupported claims can
-  never pass silently (non-functional: accuracy).
-- `style_violations(state)` blocks off-brand output at the editor step.
+### Approval gates (`gates.py`)
+
+- HITL interrupt **before `publish`** — human owns the publish boundary (FR7).
+- Fact-check guard: the system prompt + `fact_checker` route unsupported claims
+  back to `writer`; nothing publishes with unsupported claims (accuracy NFR).
+
+## UI (CopilotKit)
+
+- `useCoAgent` streams the todo list and current sub-agent (research → write →
+  edit → fact-check → format) live.
+- `useCoAgentStateRender` renders the draft, the sources list, and fact-check
+  flags as they update.
+- The `publish` interrupt renders an **approve/edit/deny** card before publish.
 
 ## Failing tests (red)
 
-`python/tests/`
-- `test_state.py` — `Brief`/`BrandKit` validation; reject missing channel.
-- `test_graph.py` (RED until wired):
-  - graph compiles and exposes the 7 nodes;
-  - `fact_checker` with flags routes back to `writer`;
-  - `formatter` is unreachable until `approvals["publish"]` is true (interrupt);
-  - `iteration` bound stops infinite fact-check loops.
-- `test_nodes.py` (RED): each node returns its declared output key(s); stubs
-  raise `NotImplementedError`. `researcher` output includes ≥1 cited `Source`.
+`agent/tests/`
+- `test_agent.py` (RED until wired): `build_agent()` returns a deep agent with
+  the six named sub-agents and expected tools.
+- `test_tools.py` (RED): `web_search`/`fetch_url`/`publish`/… honor their
+  signatures; stubs raise `NotImplementedError`. `researcher` output carries
+  ≥1 cited source.
+- `test_gates.py` (RED): the agent interrupts **before** `publish` and does not
+  publish without approval.
 
-`typescript/test/`
-- `schema.test.ts` — `Brief`/`Source`/`FactCheck` zod schemas round-trip; reject
-  a claim with no source.
-- `client.test.ts` — CLI accepts a brief file and invokes the graph (stub → RED).
+`ui/test/`
+- `agent-state.test.ts` — zod schema for `{todos, sources, draft, factcheck,
+  variants}` round-trips; rejects a claim with no source.
+- `hitl.test.ts` — the approval card renders on the `publish` interrupt (stub → RED).
 
 ## Green milestones
 
-1. Wire `build_graph()` + routing → structure/routing/interrupt tests pass.
-2. Implement `researcher` (with web/source tools), then `writer`/`editor`, then
-   `fact_checker`, `formatter` → node tests pass one by one.
-3. Wire real CMS/social/image adapters behind interfaces; keep publish gated.
+1. Assemble `build_agent()` + gate config → agent/gate tests pass with stubs.
+2. Implement tools, then role prompts (`researcher` → `writer`/`editor` →
+   `fact_checker` → `formatter`) → tool/behavior tests pass.
+3. Wire CopilotKit to live state; connect real CMS/social/image adapters behind
+   tool interfaces; keep publish human-owned.
 
 ## Integrations
 
 CMS (WordPress/Webflow), social schedulers, Google Docs/Notion, image
-generation, SEO tools. All behind interfaces so tests use fakes.
+generation, SEO tools — all behind tool interfaces so tests use fakes.

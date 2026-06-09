@@ -1,86 +1,93 @@
 # Build Plan: Sales Proposal Factory
 
 Implements [`requirements/sales-proposal-factory.md`](../../requirements/sales-proposal-factory.md)
-as a standalone LangGraph project. TDD: red scaffold first, then green.
+as a standalone **deepagents** project with a **CopilotKit** UI. TDD: red
+scaffold first, then green.
 
-## Graph design
+**Produces:** new proposals — tailored, priced, compliance-checked.
 
-State graph modeling research → solution → price → draft → review with a
-pricing approval gate and a send gate.
+## Agent design
 
-### State (`state.py`)
+One orchestrator deep agent whose **sub-agents** are the requirement-doc roles.
+Planning (`write_todos`), the proposal workspace (virtual filesystem), and two
+approval gates (HITL interrupts) come from `deepagents`.
 
 ```
-prospect: Prospect              # company, industry, size, CRM record, notes
-needs: list[Need]               # stated requirements / pain points
-solution_map: list[Mapping]     # need -> offering + outcome
-pricing: Pricing | None         # {lines, total, in_policy: bool}
-approvals: dict[str, bool]      # {"pricing": bool, "send": bool}
-document: str | None            # rendered proposal
-compliance: Compliance | None   # {issues: [...], ok: bool}
-crm_writeback: dict | None
-iteration: int                  # compliance loop counter
+build_agent() -> create_deep_agent(
+    model        = <Claude model>,
+    system_prompt= "Turn prospect context into a tailored, accurate proposal.
+                    Price only from the catalog; never send without human
+                    approval, and escalate out-of-policy pricing.",
+    tools        = [crm_lookup, price_catalog, write_file, render_doc,
+                    send_proposal, crm_write],
+    subagents    = [account_researcher, solution_architect, pricing_agent,
+                    proposal_writer, compliance_reviewer, personalizer],
+)
 ```
 
-### Nodes (one agent role each, `nodes/`)
+### Sub-agents (`subagents.py`)
 
-| Node | Role | Output keys |
+| Sub-agent | Role | Tools |
 | --- | --- | --- |
-| `account_researcher` | Enrich + summarize prospect from CRM/notes | `prospect` |
-| `solution_architect` | Map needs → offerings + outcomes | `solution_map` |
-| `pricing_agent` | Build line items/total within discount rules | `pricing` |
-| `pricing_gate` | `interrupt` when pricing is out of policy | `approvals["pricing"]` |
-| `proposal_writer` | Draft proposal from template | `document` |
-| `compliance_reviewer` | Accuracy + legal/approved-language check | `compliance` |
-| `personalizer` | Tailor + format final document | `document` (final) |
-| `send_gate` | `interrupt` for human approval before sending | `approvals["send"]` |
-| `crm_writer` | Write outcome back to CRM | `crm_writeback` |
+| `account_researcher` | Enrich + summarize prospect from CRM/notes | `crm_lookup` |
+| `solution_architect` | Map needs → offerings + outcomes | filesystem |
+| `pricing_agent` | Build line items/total within discount rules | `price_catalog` |
+| `proposal_writer` | Draft proposal from template | `write_file` |
+| `compliance_reviewer` | Accuracy + legal/approved-language check | filesystem |
+| `personalizer` | Tailor + render final document | `render_doc` |
 
-### Edges / routing (`graph.py`, `guardrails.py`)
+### Artifact & plan
 
-```
-START → account_researcher → solution_architect → pricing_agent
-pricing_agent --out_of_policy--> pricing_gate → proposal_writer
-pricing_agent --in_policy------> proposal_writer
-proposal_writer → compliance_reviewer
-compliance_reviewer --has_issues--> proposal_writer   (loop, bounded)
-compliance_reviewer --ok---------> personalizer → send_gate → crm_writer → END
-```
+- The plan is the deep agent's **todo list** (`write_todos`).
+- Prospect summary, solution map, pricing, and draft live in the **virtual
+  filesystem**.
+- The deliverable is a **rendered proposal**, then a **CRM write-back**.
 
-- `pricing_gate` fires only when `pricing.in_policy` is false (FR4, guardrail).
-- `send_gate` is a hard interrupt; nothing is sent externally until
-  `approvals["send"]` is true (FR7, guardrail).
-- `pricing_reconciles(state)` asserts line items sum to total (no math drift).
+### Approval gates (`gates.py`)
+
+- HITL interrupt **before `send_proposal`** — human owns the send boundary (FR7).
+- Conditional HITL interrupt **before pricing is accepted when out of policy**
+  (FR4): the `price_catalog` tool flags out-of-policy totals and pauses for
+  approval; in-policy pricing proceeds.
+- Pricing-reconciliation guard: line items must sum to the total.
+
+## UI (CopilotKit)
+
+- `useCoAgent` streams the todo list and current sub-agent (research → solution →
+  price → write → compliance → personalize) live.
+- `useCoAgentStateRender` renders the solution map, the itemized pricing, and
+  compliance flags as they update.
+- The out-of-policy pricing and `send_proposal` interrupts render
+  **approve/deny** cards before proceeding.
 
 ## Failing tests (red)
 
-`python/tests/`
-- `test_state.py` — `Prospect`/`Pricing` validation; reject pricing whose lines
-  don't sum to total.
-- `test_graph.py` (RED until wired):
-  - graph compiles and exposes the 9 nodes;
-  - out-of-policy pricing routes through `pricing_gate` (interrupt);
-  - in-policy pricing skips the gate;
-  - `compliance_reviewer` issues route back to `proposal_writer`;
-  - `crm_writer` is unreachable until `approvals["send"]` is true.
-- `test_nodes.py` (RED): each node returns its declared output key(s); stubs
-  raise `NotImplementedError`. `pricing_agent` only emits catalog line items.
+`agent/tests/`
+- `test_agent.py` (RED until wired): `build_agent()` returns a deep agent with
+  the six named sub-agents and expected tools.
+- `test_tools.py` (RED): `crm_lookup`/`price_catalog`/`send_proposal`/… honor
+  signatures; stubs raise `NotImplementedError`. `price_catalog` only emits
+  catalog line items and reconciles lines to total.
+- `test_gates.py` (RED): out-of-policy pricing interrupts before acceptance;
+  in-policy pricing does not; the agent interrupts **before** `send_proposal`.
 
-`typescript/test/`
-- `schema.test.ts` — `Pricing`/`Mapping` zod schemas round-trip; reject a line
-  item not in the catalog.
-- `client.test.ts` — CLI accepts a prospect id and invokes the graph (stub → RED).
+`ui/test/`
+- `agent-state.test.ts` — zod schema for `{todos, prospect, solutionMap,
+  pricing, compliance, document}` round-trips; rejects a line item not in the
+  catalog.
+- `hitl.test.ts` — approval cards render on the pricing and `send_proposal`
+  interrupts (stub → RED).
 
 ## Green milestones
 
-1. Wire `build_graph()` + routing → structure/routing/gate tests pass.
-2. Implement `account_researcher`, then `solution_architect`/`pricing_agent`,
-   then `proposal_writer`, `compliance_reviewer`, `personalizer` → node tests
-   pass one by one.
-3. Wire real CRM/CPQ/doc-gen/e-sign adapters behind interfaces; keep pricing and
-   send gates human-owned.
+1. Assemble `build_agent()` + gate config → agent/gate tests pass with stubs.
+2. Implement tools, then role prompts (`account_researcher` →
+   `solution_architect`/`pricing_agent` → `proposal_writer`/`compliance_reviewer`
+   → `personalizer`) → tool/behavior tests pass.
+3. Wire CopilotKit to live state; connect real CRM/CPQ/doc-gen/e-sign adapters
+   behind tool interfaces; keep pricing and send gates human-owned.
 
 ## Integrations
 
 CRM (Salesforce/HubSpot), CPQ/pricing, document generation (PDF/DOCX/Slides),
-e-signature, approval workflows. All behind interfaces so tests use fakes.
+e-signature, approval workflows — all behind tool interfaces so tests use fakes.
