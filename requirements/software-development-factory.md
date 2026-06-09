@@ -89,6 +89,9 @@ opening the PR) that CopilotKit surfaces as approve/deny steps in the UI.
 - FR6: Run build/lint/tests and report results faithfully (no false greens).
 - FR7: Open a draft PR; never push to a protected branch directly.
 - FR8: Respond to review comments and CI failures iteratively.
+- FR9: Create and manage its own sub-agents at runtime (like Claude Code
+  subagents) — author, list, update, and retire specialized roles on top of the
+  seed roles, persisting them across runs.
 
 ## 8. Non-Functional Requirements
 

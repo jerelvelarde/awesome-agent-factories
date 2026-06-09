@@ -90,6 +90,9 @@ sending) that CopilotKit surfaces as approve/deny steps in the UI.
 - FR6: Use only legal-approved boilerplate and claims.
 - FR7: Require human approval before the proposal is sent or shared externally.
 - FR8: Write outcomes back to CRM (proposal sent, value, stage).
+- FR9: Create and manage its own sub-agents at runtime (like Claude Code
+  subagents) — author, list, update, and retire specialized roles on top of the
+  seed roles, persisting them across runs.
 
 ## 8. Non-Functional Requirements
 

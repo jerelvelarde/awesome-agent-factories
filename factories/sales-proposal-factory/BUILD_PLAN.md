@@ -36,6 +36,16 @@ build_agent() -> create_deep_agent(
 | `compliance_reviewer` | Accuracy + legal/approved-language check | filesystem |
 | `personalizer` | Tailor + render final document | `render_doc` |
 
+### Dynamic sub-agent management
+
+Beyond the seed roles above, the factory can **create and manage its own
+sub-agents at runtime** (like Claude Code subagents). A `SubAgentRegistry`
+(`registry.py`) holds managed harness specs, and management tools
+(`management.py`: `create_subagent`, `list_subagents`, `update_subagent`,
+`delete_subagent`) are given to the orchestrator so it can author a new
+specialized sub-agent — e.g. an industry- or product-line specialist — when a
+deal needs a role it does not yet have. Specs persist via a backend across runs.
+
 ### Artifact & plan
 
 - The plan is the deep agent's **todo list** (`write_todos`).
@@ -70,6 +80,10 @@ build_agent() -> create_deep_agent(
   catalog line items and reconciles lines to total.
 - `test_gates.py` (RED): out-of-policy pricing interrupts before acceptance;
   in-policy pricing does not; the agent interrupts **before** `send_proposal`.
+- `test_registry.py`: seeding + read access pass; `create`/`delete` of a managed
+  sub-agent are RED until implemented.
+- `test_management.py` (RED): `create_subagent`/`list_subagents`/… return/manage
+  specs.
 
 `ui/test/`
 - `agent-state.test.ts` — zod schema for `{todos, prospect, solutionMap,

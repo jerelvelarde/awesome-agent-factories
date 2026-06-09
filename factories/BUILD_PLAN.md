@@ -52,6 +52,13 @@ ORCHESTRATOR  = create_deep_agent(
 
 - **Sub-agents** map 1:1 to the requirement-doc roles (planner, reviewer,
   fact-checker, pricing-agent, …). Each is `{name, description, prompt, tools}`.
+- **Dynamic sub-agent management.** Beyond the seed roles, each factory can
+  **create and manage its own sub-agents at runtime** — like Claude Code
+  subagents. A `SubAgentRegistry` holds the managed harness definitions, and
+  management tools (`create_subagent`, `list_subagents`, `update_subagent`,
+  `delete_subagent`) are given to the orchestrator so it can author a new
+  specialized sub-agent when a task needs a role it does not yet have. Specs are
+  persisted via a backend so they survive across runs.
 - **Artifact** (the "thing") is written to the deep agent's filesystem — a diff,
   a draft, a proposal — and surfaced in the UI.
 - **Approval gates** are tool-level HITL interrupts (e.g. interrupt before the
@@ -67,12 +74,16 @@ factories/<factory-name>/
     pyproject.toml               # deepagents, langgraph, pytest, ruff
     langgraph.json               # exposes the agent to CopilotKit via AG-UI
     src/<pkg>/agent.py           # build_agent() -> create_deep_agent(...)
-    src/<pkg>/subagents.py       # role sub-agent configs
+    src/<pkg>/subagents.py       # seed role sub-agent configs
+    src/<pkg>/registry.py        # SubAgentRegistry — managed sub-agents
+    src/<pkg>/management.py      # create/list/update/delete_subagent tools
     src/<pkg>/tools.py           # domain tools (stubs: NotImplementedError)
     src/<pkg>/gates.py           # HITL interrupt config for approval tools
     tests/test_agent.py          # agent wired with expected sub-agents/tools (RED)
     tests/test_tools.py          # per-tool contract (RED)
     tests/test_gates.py          # interrupts fire at the right tools (RED)
+    tests/test_registry.py       # seed + create/manage sub-agents (RED)
+    tests/test_management.py      # sub-agent management tools (RED)
   ui/                            # TypeScript — the CopilotKit app
     package.json                 # @copilotkit/react-core, react-ui, runtime, next, vitest
     app/                         # Next.js app: <CopilotKit> + useCoAgent

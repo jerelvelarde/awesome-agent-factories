@@ -35,6 +35,16 @@ build_agent() -> create_deep_agent(
 | `verifier` | Run build/lint/tests; run app where feasible | `run_tests`, `run_lint` |
 | `integrator` | Open the draft PR with summary + plan + evidence | `open_pr` |
 
+### Dynamic sub-agent management
+
+Beyond the seed roles above, the factory can **create and manage its own
+sub-agents at runtime** (like Claude Code subagents). A `SubAgentRegistry`
+(`registry.py`) holds managed harness specs, and management tools
+(`management.py`: `create_subagent`, `list_subagents`, `update_subagent`,
+`delete_subagent`) are given to the orchestrator so it can author a new
+specialized sub-agent — e.g. a `migration_specialist` — when a task needs a role
+it does not yet have. Specs persist via a backend across runs.
+
 ### Artifact & plan
 
 - The plan is the deep agent's **todo list** (`write_todos`).
@@ -63,6 +73,10 @@ build_agent() -> create_deep_agent(
   signature; stubs raise `NotImplementedError`.
 - `test_gates.py` (RED): invoking the agent interrupts **before** `open_pr` and
   does not open a PR without approval.
+- `test_registry.py`: seeding + read access pass; `create`/`delete` of a managed
+  sub-agent are RED until implemented.
+- `test_management.py` (RED): `create_subagent`/`list_subagents`/… return/manage
+  specs.
 
 `ui/test/`
 - `agent-state.test.ts` — zod schema for `{todos, diff, testResults, prUrl}`

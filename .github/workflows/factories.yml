@@ -1,0 +1,27 @@
+name: factories
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# Note: these projects are an intentional TDD "red" scaffold — behavioral tests
+# fail until the stubs are implemented. CI runs the suites to track the
+# red → green progress; a red result here is expected until implementation lands.
+
+jobs:
+  software-development-factory-agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: factories/software-development-factory/agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The test suite runs without the heavy agent deps (deepagents/langgraph)
+      # — pyproject sets pythonpath=src — so the red signal is the tests, not
+      # dependency resolution. Full deps come in with the implementation phase.
+      - run: pip install pytest
+      - run: pytest -q

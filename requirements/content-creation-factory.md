@@ -87,6 +87,9 @@ that CopilotKit surfaces as an approve/edit/deny step in the UI.
 - FR5: Enforce the style guide (terminology, banned phrases, formatting).
 - FR6: Produce channel-specific variants from one approved source.
 - FR7: Require human approval before any publish action.
+- FR8: Create and manage its own sub-agents at runtime (like Claude Code
+  subagents) — author, list, update, and retire specialized roles on top of the
+  seed roles, persisting them across runs.
 
 ## 8. Non-Functional Requirements
 

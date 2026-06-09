@@ -35,6 +35,16 @@ build_agent() -> create_deep_agent(
 | `fact_checker` | Verify claims vs sources, flag unsupported | filesystem |
 | `formatter` | Repurpose into channel variants + metadata | `write_file` |
 
+### Dynamic sub-agent management
+
+Beyond the seed roles above, the factory can **create and manage its own
+sub-agents at runtime** (like Claude Code subagents). A `SubAgentRegistry`
+(`registry.py`) holds managed harness specs, and management tools
+(`management.py`: `create_subagent`, `list_subagents`, `update_subagent`,
+`delete_subagent`) are given to the orchestrator so it can author a new
+specialized sub-agent — e.g. a `seo_specialist` or a per-channel writer — when a
+brief needs a role it does not yet have. Specs persist via a backend across runs.
+
 ### Artifact & plan
 
 - The plan is the deep agent's **todo list** (`write_todos`).
@@ -65,6 +75,10 @@ build_agent() -> create_deep_agent(
   ≥1 cited source.
 - `test_gates.py` (RED): the agent interrupts **before** `publish` and does not
   publish without approval.
+- `test_registry.py`: seeding + read access pass; `create`/`delete` of a managed
+  sub-agent are RED until implemented.
+- `test_management.py` (RED): `create_subagent`/`list_subagents`/… return/manage
+  specs.
 
 `ui/test/`
 - `agent-state.test.ts` — zod schema for `{todos, sources, draft, factcheck,
