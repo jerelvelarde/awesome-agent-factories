@@ -16,8 +16,8 @@ function FactoryView() {
       <section>
         <h2>Plan</h2>
         <ol>
-          {(state.todos ?? []).map((t, i) => (
-            <li key={i}>
+          {(state.todos ?? []).map((t) => (
+            <li key={t.content}>
               {t.status}: {t.content}
             </li>
           ))}

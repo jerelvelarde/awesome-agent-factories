@@ -12,7 +12,7 @@ roles, via a shared :class:`~sdf.registry.SubAgentRegistry`.
 from __future__ import annotations
 
 from .gates import APPROVAL_TOOLS, interrupt_config  # noqa: F401  (used once implemented)
-from .management import MANAGEMENT_TOOLS  # noqa: F401
+from .management import make_management_tools  # noqa: F401
 from .registry import SubAgentRegistry  # noqa: F401
 from .subagents import SUBAGENTS  # noqa: F401
 from .tools import ALL_TOOLS  # noqa: F401
@@ -31,10 +31,11 @@ request without passing tests and human approval.
 def build_agent(model: str = DEFAULT_MODEL, checkpointer=None):
     """Build the orchestrator deep agent.
 
-    Seeds a :class:`SubAgentRegistry` with ``SUBAGENTS`` and wires
-    ``SYSTEM_PROMPT``, ``ALL_TOOLS``, and ``MANAGEMENT_TOOLS`` (for dynamic
-    sub-agent management) into a deepagents deep agent, with ``APPROVAL_TOOLS``
-    interrupt-gated for human-in-the-loop approval. Returns a compiled deep
-    agent (a LangGraph graph).
+    Seeds a per-agent :class:`SubAgentRegistry` with ``SUBAGENTS`` and wires
+    ``SYSTEM_PROMPT``, ``ALL_TOOLS``, and the registry-bound management tools
+    from ``make_management_tools(registry)`` (for dynamic sub-agent management)
+    into a deepagents deep agent, with ``APPROVAL_TOOLS`` interrupt-gated for
+    human-in-the-loop approval. Returns a compiled deep agent (a LangGraph
+    graph).
     """
     raise NotImplementedError("build_agent is not implemented yet (red scaffold)")

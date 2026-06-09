@@ -28,12 +28,24 @@ class SubAgentSpec:
     model: str | None = None
 
 
+def _tool_name(t) -> str:
+    """Resolve a tool reference to its string name.
+
+    Handles plain functions/classes (``__name__``), LangChain tool instances
+    (``.name``), already-resolved strings, and any other callable (falls back to
+    ``str(t)``) — so non-standard callables don't raise ``AttributeError``.
+    """
+    if isinstance(t, str):
+        return t
+    return getattr(t, "name", None) or getattr(t, "__name__", None) or str(t)
+
+
 def _spec_from_dict(d: dict) -> SubAgentSpec:
     return SubAgentSpec(
         name=d["name"],
         description=d["description"],
         prompt=d["prompt"],
-        tools=tuple(t.__name__ if callable(t) else t for t in d.get("tools", ())),
+        tools=tuple(_tool_name(t) for t in d.get("tools", ())),
         model=d.get("model"),
     )
 

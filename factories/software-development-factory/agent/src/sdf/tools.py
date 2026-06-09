@@ -35,3 +35,5 @@ def open_pr(title: str, body: str, branch: str) -> str:
 
 ALL_TOOLS = [read_repo, write_file, run_tests, run_lint, open_pr]
 TOOL_NAMES = {t.__name__ for t in ALL_TOOLS}
+# Resolve a tool name (as stored in SubAgentSpec.tools) back to its callable.
+TOOL_MAP = {t.__name__: t for t in ALL_TOOLS}

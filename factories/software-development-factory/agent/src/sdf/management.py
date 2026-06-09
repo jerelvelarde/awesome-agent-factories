@@ -2,11 +2,23 @@
 
 These are exposed to the orchestrator so it can author, update, and retire
 specialized sub-agents at runtime — like Claude Code subagents — on top of the
-seed roles. Stubs until implemented (red scaffold); real implementations operate
-on a shared :class:`~sdf.registry.SubAgentRegistry`.
+seed roles.
+
+The module-level functions below are the static catalog (stable names/signatures
+used for wiring and tests). Because each agent gets its own
+:class:`~sdf.registry.SubAgentRegistry` inside ``build_agent()``, the *runtime*
+tools must be bound to that specific instance rather than module-level global
+state (which would break isolation across concurrent runs). Use
+:func:`make_management_tools` to build registry-bound tools. All stubs until
+implemented (red scaffold).
 """
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .registry import SubAgentRegistry
 
 
 def create_subagent(
@@ -37,3 +49,13 @@ def delete_subagent(name: str) -> None:
 
 MANAGEMENT_TOOLS = [create_subagent, list_subagents, update_subagent, delete_subagent]
 MANAGEMENT_TOOL_NAMES = {t.__name__ for t in MANAGEMENT_TOOLS}
+
+
+def make_management_tools(registry: "SubAgentRegistry") -> list:
+    """Build management tools bound to a specific ``registry`` instance.
+
+    Implementations should close over ``registry`` (or expose it as methods) so
+    each agent run manages its own sub-agents in isolation. Returns a list of
+    bound tools mirroring :data:`MANAGEMENT_TOOLS`.
+    """
+    raise NotImplementedError
