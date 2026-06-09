@@ -8,6 +8,18 @@ RFP response. A team of agents researches the account, maps needs to offerings,
 prices the deal, drafts the document, and reviews it for accuracy and
 compliance — so reps produce winning proposals in minutes instead of days.
 
+### Concept & reference stack
+
+This factory is a **group of agents built on harnesses**. A *harness* is a base
+model + system instructions + tools; an *agent* is a harness assigned a role;
+the *factory* is the orchestrated group of agents that produces one type of
+artifact — here, **new proposals** (tailored, priced, compliance-checked). The
+reference implementation uses [`deepagents`](https://github.com/langchain-ai/deepagents)
+as the harness and orchestration (built-in planning, a virtual filesystem for
+the proposal workspace, sub-agent context isolation, and human-in-the-loop
+interrupts) and [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the
+UI. See [`factories/sales-proposal-factory/BUILD_PLAN.md`](../factories/sales-proposal-factory/BUILD_PLAN.md).
+
 ## 2. Goals & Non-Goals
 
 ### Goals
@@ -39,7 +51,9 @@ compliance — so reps produce winning proposals in minutes instead of days.
 
 ## 5. Agent Architecture
 
-A supervised proposal pipeline:
+A supervised proposal pipeline, realized as a single **deepagents** deep agent
+whose **sub-agents** are the roles below (each a harness: model + system prompt
++ tools, with context isolation):
 
 1. **Account Researcher** — enriches and summarizes the prospect, industry
    context, and likely priorities from CRM and notes.
@@ -54,8 +68,10 @@ A supervised proposal pipeline:
 6. **Personalizer/Formatter** — applies prospect-specific tailoring and outputs
    the final formatted document.
 
-A **Supervisor** enforces the loop, applies approval gates (especially on
-pricing), and escalates to the rep/manager.
+The **orchestrator deep agent** enforces the loop, plans via its built-in todo
+list, applies approval gates, and escalates to the rep/manager — implemented as
+human-in-the-loop interrupts (before accepting out-of-policy pricing and before
+sending) that CopilotKit surfaces as approve/deny steps in the UI.
 
 ## 6. Outputs / Deliverables
 

@@ -8,6 +8,18 @@ threads, newsletters, and supporting assets — through a team of agents that
 research, draft, edit, and fact-check. It models an editorial pipeline so a
 single brief yields on-brand, accurate, channel-ready content.
 
+### Concept & reference stack
+
+This factory is a **group of agents built on harnesses**. A *harness* is a base
+model + system instructions + tools; an *agent* is a harness assigned a role;
+the *factory* is the orchestrated group of agents that produces one type of
+artifact — here, **new content** (publish-ready pieces plus channel variants).
+The reference implementation uses [`deepagents`](https://github.com/langchain-ai/deepagents)
+as the harness and orchestration (built-in planning, a virtual filesystem for
+the draft workspace, sub-agent context isolation, and human-in-the-loop
+interrupts) and [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the
+UI. See [`factories/content-creation-factory/BUILD_PLAN.md`](../factories/content-creation-factory/BUILD_PLAN.md).
+
 ## 2. Goals & Non-Goals
 
 ### Goals
@@ -39,7 +51,9 @@ single brief yields on-brand, accurate, channel-ready content.
 
 ## 5. Agent Architecture
 
-A supervised editorial pipeline:
+A supervised editorial pipeline, realized as a single **deepagents** deep agent
+whose **sub-agents** are the roles below (each a harness: model + system prompt
++ tools, with context isolation):
 
 1. **Researcher** — gathers and cites sources, builds a factual outline, and
    surfaces gaps or conflicting claims.
@@ -52,8 +66,10 @@ A supervised editorial pipeline:
 6. **Formatter/Repurposer** — adapts the approved piece into channel variants
    (e.g., long-form → thread, newsletter, captions) and adds metadata/SEO.
 
-A **Supervisor** routes drafts through the loop, enforces brand and accuracy
-checks, and escalates at the approval gate.
+The **orchestrator deep agent** routes drafts through the loop, plans via its
+built-in todo list, enforces brand and accuracy checks, and escalates at the
+approval gate — implemented as a human-in-the-loop interrupt before publish
+that CopilotKit surfaces as an approve/edit/deny step in the UI.
 
 ## 6. Outputs / Deliverables
 

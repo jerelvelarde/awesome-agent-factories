@@ -8,6 +8,18 @@ coordinated team of specialized AI agents. It models a small engineering org —
 planning, implementation, review, and verification — so a single human request
 can produce a mergeable pull request with minimal manual orchestration.
 
+### Concept & reference stack
+
+This factory is a **group of agents built on harnesses**. A *harness* is a base
+model + system instructions + tools; an *agent* is a harness assigned a role;
+the *factory* is the orchestrated group of agents that produces one type of
+artifact — here, **new software** (a reviewed, tested draft pull request). The
+reference implementation uses [`deepagents`](https://github.com/langchain-ai/deepagents)
+as the harness and orchestration (built-in planning, a virtual filesystem for
+the code workspace, sub-agent context isolation, and human-in-the-loop
+interrupts) and [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the
+UI. See [`factories/software-development-factory/BUILD_PLAN.md`](../factories/software-development-factory/BUILD_PLAN.md).
+
 ## 2. Goals & Non-Goals
 
 ### Goals
@@ -38,7 +50,9 @@ can produce a mergeable pull request with minimal manual orchestration.
 
 ## 5. Agent Architecture
 
-A supervised pipeline of role-specialized agents:
+A supervised pipeline of role-specialized agents, realized as a single
+**deepagents** deep agent whose **sub-agents** are the roles below (each a
+harness: model + system prompt + tools, with context isolation):
 
 1. **Planner** — decomposes the brief into a step-by-step plan, identifies
    files to touch, and flags architectural trade-offs. Output gated for human
@@ -53,8 +67,10 @@ A supervised pipeline of role-specialized agents:
    feasible to confirm behavior, not just green tests.
 6. **Integrator** — opens a draft PR with a summary, plan, and test evidence.
 
-A **Supervisor/Orchestrator** routes work between agents, enforces the loop,
-manages retries, and escalates to the human at approval gates.
+The **orchestrator deep agent** routes work between sub-agents, plans via its
+built-in todo list, manages retries, and escalates to the human at approval
+gates — implemented as tool-level human-in-the-loop interrupts (e.g. before
+opening the PR) that CopilotKit surfaces as approve/deny steps in the UI.
 
 ## 6. Outputs / Deliverables
 

@@ -2,7 +2,7 @@
 
 > A curated list of frameworks, platforms, and tools for **building, generating, and orchestrating AI agents** — the "factories" that manufacture agents.
 
-An *agent factory* is anything you use to produce agents rather than an agent itself: code-first frameworks, visual builders, enterprise platforms, and even autonomous systems that write other agents. This list collects the best of them, plus the protocols, observability tooling, and learning resources that surround them.
+An *agent factory* is a **group of agents, built on harnesses, that produces one type of artifact** — software, content, proposals, and so on. A *harness* is the base model + system instructions + tools that each agent runs on; an *agent* is a harness assigned a role; a *factory* orchestrates a group of them to manufacture its output. This list collects the best tools across that stack — harnesses and frameworks, visual builders, enterprise platforms, agents that build agents, plus the UIs, protocols, observability, and learning resources around them — and links to worked [reference factories](#reference-factories) built in this repo.
 
 Only actively maintained, documented, and genuinely recommendable projects are included.
 
@@ -12,10 +12,12 @@ Only actively maintained, documented, and genuinely recommendable projects are i
 - [Visual & Low-Code Builders](#visual--low-code-builders)
 - [Enterprise Agent Platforms](#enterprise-agent-platforms)
 - [Agents That Build Agents](#agents-that-build-agents)
+- [Agent UIs](#agent-uis)
 - [Memory & State](#memory--state)
 - [Protocols & Interoperability](#protocols--interoperability)
 - [Observability & Ops](#observability--ops)
 - [Learning Resources](#learning-resources)
+- [Reference Factories](#reference-factories)
 - [Related Lists](#related-lists)
 - [Contributing](#contributing)
 
@@ -26,6 +28,7 @@ Libraries for defining agents in code, with control over tools, state, and multi
 - [Agno](https://github.com/agno-agi/agno) - Fast multi-agent framework with persistent memory and multimodal input; ships AgentOS, a pre-built server with sessions, streaming, and RBAC.
 - [AutoGen](https://github.com/microsoft/autogen) - Microsoft framework for conversational multi-agent systems, including group decision-making and debate patterns, with an optional no-code Studio.
 - [CrewAI](https://github.com/crewAIInc/crewAI) - Role-based orchestration for modeling teams of agents with the least boilerplate; intuitive for business workflow automation.
+- [deepagents](https://github.com/langchain-ai/deepagents) - Batteries-included agent harness on LangGraph with built-in planning, a virtual filesystem, sub-agent context isolation, and human-in-the-loop interrupts.
 - [Google ADK](https://github.com/google/adk-python) - Google's official Agent Development Kit with native Gemini and Vertex AI integration.
 - [Haystack](https://github.com/deepset-ai/haystack) - deepset's framework for composable pipelines and agents over search and LLMs.
 - [LangGraph](https://github.com/langchain-ai/langgraph) - Graph-based framework for stateful, durable, production-grade agent workflows with fine-grained control over branching and error handling.
@@ -67,6 +70,12 @@ Autonomous systems that generate other agents, code, or whole software projects 
 - [MetaGPT](https://github.com/geekan/MetaGPT) - Multi-agent framework that simulates a software company, assigning roles to turn one prompt into a project.
 - [OpenHands](https://github.com/All-Hands-AI/OpenHands) - Platform for autonomous software-engineering agents that write code, run commands, and browse the web.
 
+## Agent UIs
+
+Frontend frameworks for rendering agent state, streaming, and human-in-the-loop approvals.
+
+- [CopilotKit](https://github.com/CopilotKit/CopilotKit) - React frontend stack for agents (maker of the AG-UI protocol) with first-class LangGraph and deep-agents support for shared state, generative UI, and human-in-the-loop.
+
 ## Memory & State
 
 Building blocks that give agents long-term memory and persistence.
@@ -80,6 +89,7 @@ Building blocks that give agents long-term memory and persistence.
 Standards that let agents talk to tools and to each other.
 
 - [Agent2Agent (A2A)](https://github.com/a2aproject/A2A) - Open protocol for interoperability and communication between agents from different vendors.
+- [AG-UI](https://github.com/ag-ui-protocol/ag-ui) - Open protocol standardizing the interaction layer between agents and user-facing applications.
 - [Model Context Protocol](https://github.com/modelcontextprotocol) - Anthropic's open standard for connecting agents to tools and data sources through a common interface.
 
 ## Observability & Ops
@@ -96,6 +106,14 @@ Tracing, evaluation, and monitoring for agents in development and production.
 - [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) - Anthropic's guide to agent patterns, when to use them, and how to keep them simple.
 - [OpenAI Cookbook — Agents](https://github.com/openai/openai-cookbook) - Worked examples and recipes for building agents with the OpenAI platform.
 - [The AI Agent Factory](https://agentfactory.panaversity.org/) - Open course on the agent-factory paradigm and building production agents.
+
+## Reference Factories
+
+Worked examples built in this repo, each a *group of agents on harnesses that produces one type of artifact*. The reference stack is [deepagents](https://github.com/langchain-ai/deepagents) for the harness and orchestration and [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the UI. Each has a [requirement doc](requirements) and a [build plan](factories).
+
+- [Software Development Factory](factories/software-development-factory/BUILD_PLAN.md) - Produces new software: a reviewed, tested draft pull request. ([requirements](requirements/software-development-factory.md))
+- [Content Creation Factory](factories/content-creation-factory/BUILD_PLAN.md) - Produces new content: publish-ready pieces plus channel variants. ([requirements](requirements/content-creation-factory.md))
+- [Sales Proposal Factory](factories/sales-proposal-factory/BUILD_PLAN.md) - Produces new proposals: tailored, priced, and compliance-checked. ([requirements](requirements/sales-proposal-factory.md))
 
 ## Related Lists
 
