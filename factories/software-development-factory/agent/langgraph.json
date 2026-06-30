@@ -1,7 +1,0 @@
-{
-  "dependencies": ["."],
-  "graphs": {
-    "software_development_factory": "./src/sdf/agent.py:build_agent"
-  },
-  "env": ".env"
-}

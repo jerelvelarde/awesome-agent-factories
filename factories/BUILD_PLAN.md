@@ -115,6 +115,6 @@ go green first; behavioral tool/sub-agent tests go green as each is implemented.
 
 - Python: `deepagents`, `langgraph`, `langchain`, `pytest`, `ruff` (via `uv`).
 - TypeScript: `@copilotkit/*`, `next`, `vitest`, `zod`.
-- `.github/workflows/factories.yml` matrix runs each project's Python + TS tests.
+- CI (lands with the implementation) matrix-runs each project's Python + TS tests.
 - Model tier configurable per sub-agent (env-driven), defaulting to current
   Claude models.
