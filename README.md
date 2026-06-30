@@ -2,7 +2,7 @@
 
 > A curated list of frameworks, platforms, and tools for **building, generating, and orchestrating AI agents** — the "factories" that manufacture agents.
 
-An *agent factory* is a **group of agents, built on harnesses, that produces one type of artifact** — software, content, proposals, and so on. A *harness* is the base model + system instructions + tools that each agent runs on; an *agent* is a harness assigned a role; a *factory* orchestrates a group of them to manufacture its output. This list collects the best tools across that stack — harnesses and frameworks, visual builders, enterprise platforms, agents that build agents, plus the UIs, protocols, observability, and learning resources around them — and links to worked [reference factories](#reference-factories) built in this repo.
+An *agent factory* is a **group of agents, built on harnesses, that produces one type of artifact** — software, content, proposals, and so on. A *harness* is the base model + system instructions + tools that each agent runs on; an *agent* is a harness assigned a role; a *factory* orchestrates a group of them to manufacture its output. This list collects the best tools across that stack — harnesses and frameworks, visual builders, enterprise platforms, agents that build agents, plus the UIs, protocols, observability, and learning resources around them — and links to worked reference factories built in this repo.
 
 Only actively maintained, documented, and genuinely recommendable projects are included.
 
@@ -18,8 +18,6 @@ Only actively maintained, documented, and genuinely recommendable projects are i
 - [Observability & Ops](#observability--ops)
 - [Learning Resources](#learning-resources)
 - [Reference Factories](#reference-factories)
-- [Related Lists](#related-lists)
-- [Contributing](#contributing)
 
 ## Code-First Frameworks
 
@@ -30,7 +28,7 @@ Libraries for defining agents in code, with control over tools, state, and multi
 - [CrewAI](https://github.com/crewAIInc/crewAI) - Role-based orchestration for modeling teams of agents with the least boilerplate; intuitive for business workflow automation.
 - [deepagents](https://github.com/langchain-ai/deepagents) - Batteries-included agent harness on LangGraph with built-in planning, a virtual filesystem, sub-agent context isolation, and human-in-the-loop interrupts.
 - [Google ADK](https://github.com/google/adk-python) - Google's official Agent Development Kit with native Gemini and Vertex AI integration.
-- [Haystack](https://github.com/deepset-ai/haystack) - deepset's framework for composable pipelines and agents over search and LLMs.
+- [Haystack](https://github.com/deepset-ai/haystack) - Composable pipelines and agents over search and LLMs, from deepset.
 - [LangGraph](https://github.com/langchain-ai/langgraph) - Graph-based framework for stateful, durable, production-grade agent workflows with fine-grained control over branching and error handling.
 - [LlamaIndex](https://github.com/run-llama/llama_index) - Data-centric framework whose AgentWorkflow combines agents with first-class RAG over your data.
 - [Mastra](https://github.com/mastra-ai/mastra) - TypeScript-first agent framework (from the team behind Gatsby) for the JavaScript ecosystem.
@@ -109,11 +107,11 @@ Tracing, evaluation, and monitoring for agents in development and production.
 
 ## Reference Factories
 
-Worked examples built in this repo, each a *group of agents on harnesses that produces one type of artifact*. The reference stack is [deepagents](https://github.com/langchain-ai/deepagents) for the harness and orchestration and [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the UI. Each has a [requirement doc](requirements) and a [build plan](factories).
+Worked examples built in this repo, each a *group of agents on harnesses that produces one type of artifact*. The reference stack is deepagents for the harness and orchestration and CopilotKit for the UI. Each ships a requirement doc and a build plan.
 
-- [Software Development Factory](factories/software-development-factory/BUILD_PLAN.md) - Produces new software: a reviewed, tested draft pull request. ([requirements](requirements/software-development-factory.md))
-- [Content Creation Factory](factories/content-creation-factory/BUILD_PLAN.md) - Produces new content: publish-ready pieces plus channel variants. ([requirements](requirements/content-creation-factory.md))
-- [Sales Proposal Factory](factories/sales-proposal-factory/BUILD_PLAN.md) - Produces new proposals: tailored, priced, and compliance-checked. ([requirements](requirements/sales-proposal-factory.md))
+- [Software Development Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/software-development-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new software: a reviewed, tested draft pull request.
+- [Content Creation Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/content-creation-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new content: publish-ready pieces plus channel variants.
+- [Sales Proposal Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/sales-proposal-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new proposals: tailored, priced, and compliance-checked.
 
 ## Related Lists
 
@@ -124,9 +122,3 @@ Worked examples built in this repo, each a *group of agents on harnesses that pr
 ## Contributing
 
 Contributions are welcome! Please read the [contribution guidelines](contributing.md) first. In short: suggest only projects you would personally recommend, keep them maintained and documented, and match the existing entry format.
-
-## License
-
-[![CC0](https://licensebuttons.net/p/zero/1.0/88x31.png)](https://creativecommons.org/publicdomain/zero/1.0/)
-
-To the extent possible under law, the authors have waived all copyright and related or neighboring rights to this work.
