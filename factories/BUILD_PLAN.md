@@ -43,26 +43,43 @@ ships software / publishes content / sends a proposal.
 
 ```
 ORCHESTRATOR  = create_deep_agent(
-    model        = <Claude model>,
+    model        = <Claude model>,            # provider-prefixed; tier per sub-agent
     system_prompt= <factory's job + guardrails>,
     tools        = [<domain tools>],          # GitHub / CMS / CRM, etc.
     subagents    = [<one per role from the requirement doc>],
+    interrupt_on = {<approval tool>: {"allowed_decisions": ["approve", "edit", "reject"]}},
+    checkpointer = <checkpointer>,            # REQUIRED for HITL pause/resume
+    store        = <BaseStore>,               # long-term memory + managed sub-agent specs
 )
 ```
 
 - **Sub-agents** map 1:1 to the requirement-doc roles (planner, reviewer,
-  fact-checker, pricing-agent, …). Each is `{name, description, prompt, tools}`.
-- **Dynamic sub-agent management.** Beyond the seed roles, each factory can
-  **create and manage its own sub-agents at runtime** — like Claude Code
-  subagents. A `SubAgentRegistry` holds the managed harness definitions, and
-  management tools (`create_subagent`, `list_subagents`, `update_subagent`,
-  `delete_subagent`) are given to the orchestrator so it can author a new
-  specialized sub-agent when a task needs a role it does not yet have. Specs are
-  persisted via a backend so they survive across runs.
-- **Artifact** (the "thing") is written to the deep agent's filesystem — a diff,
-  a draft, a proposal — and surfaced in the UI.
-- **Approval gates** are tool-level HITL interrupts (e.g. interrupt before the
-  `open_pr` / `publish` / `send_proposal` tool) that CopilotKit renders.
+  fact-checker, pricing-agent, …). Each is `{name, description, system_prompt,
+  tools, model?}` (the key is `system_prompt`, not `prompt`; specs don't inherit
+  the parent). Give each only the tools it needs; model-tier per role.
+- **Dynamic sub-agent management.** Runtime delegation is *mostly built in* — the
+  auto-injected `task` tool (context-isolated calls), a default `general-purpose`
+  sub-agent, and `AsyncSubAgent` (+ the Agent Protocol) for independent runs. The
+  additive part is authoring/persisting **new specs across runs**: the
+  `SubAgentRegistry` + management tools (`create_subagent`, `list_subagents`,
+  `update_subagent`, `delete_subagent`) persist specs in the LangGraph `BaseStore`
+  and the supervisor is **rebuilt at process start** from them (a compiled graph's
+  sub-agent set is fixed). The registry is bound per `build_agent()` for isolation.
+- **Artifact** (the "thing") is written to the deep agent's filesystem (state
+  `files`, backed by a `StoreBackend` so it survives runs) — a diff, a draft, a
+  proposal — and surfaced in the UI.
+- **Approval gates** are declarative **`interrupt_on`** tool interrupts (e.g.
+  before `open_pr` / `publish` / `send_proposal`) with `allowed_decisions` and
+  optional `when` predicates; a checkpointer is required and CopilotKit renders
+  the approve/edit/reject step. Use `reject` (not `respond`) to deny a
+  side-effecting tool.
+- **Persistence & quality (production).** Swap `MemorySaver` for
+  `PostgresSaver`/`AsyncPostgresSaver` + a persistent `BaseStore`. Add the quality
+  layer each factory's BUILD_PLAN details: deterministic artifact validation +
+  LLM-as-judge on a ~20-case golden dataset (CI gate via LangSmith/promptfoo),
+  OTel/LangSmith tracing with per-role cost, hard token/iteration/wall-clock
+  ceilings, and a verifier/critic before each human gate. See
+  [`.chalk/improvements.md`](../.chalk/improvements.md).
 
 ## Standard project layout (applied to all three, standalone)
 
@@ -115,6 +132,6 @@ go green first; behavioral tool/sub-agent tests go green as each is implemented.
 
 - Python: `deepagents`, `langgraph`, `langchain`, `pytest`, `ruff` (via `uv`).
 - TypeScript: `@copilotkit/*`, `next`, `vitest`, `zod`.
-- `.github/workflows/factories.yml` matrix runs each project's Python + TS tests.
+- CI (lands with the implementation) matrix-runs each project's Python + TS tests.
 - Model tier configurable per sub-agent (env-driven), defaulting to current
   Claude models.
