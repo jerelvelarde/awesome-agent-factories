@@ -90,9 +90,9 @@ Re-run `npx awesome-lint` until **0 errors**.
   (just added).
 - ⬜ Add a **`code-of-conduct.md`** (Contributor Covenant) — required by the
   awesome contributing guidelines.
-- ⬜ Confirm **every external link resolves** and each project is **actively
-  maintained** (drop archived/deprecated; the manifesto bar). Spot-check the
-  enterprise-platform and observability entries especially.
+- ✅ Confirm **every external link resolves** and each project is **actively
+  maintained** (done 2026-07-02: 111 links checked, all valid; list expanded to 15
+  categories / ~100 entries — see [`landscape-2026.md`](landscape-2026.md)).
 - ⬜ Ensure **every entry description ends with a period** and says *why* it's
   worth the reader's time.
 - ⬜ Note: the removed SDF implementation remains in git history (by choice) —
