@@ -58,9 +58,10 @@ Result: ~43 → ~100 entries across **15 content categories** (6 new).
   still pass the bar but a strict reviewer may question longevity.
 - Daytona's public OSS repo froze (Jun 2026) though the hosted product is active.
 - Refresh exact star counts at PR time (reviewers sometimes check).
-- Reference-factory + differentiator links currently point at the `breadoncee`
-  fork; switch to the canonical upstream URLs if/when merged into
-  `jerelvelarde/awesome-agent-factories`.
+- ✅ Reference-factory links repointed to the canonical upstream
+  `jerelvelarde/awesome-agent-factories` (2026-07-02); the `docs/landscape.md`
+  differentiator uses repo-relative links, so it resolves in either repo. Note:
+  these blob URLs 404 until PR #3 merges into upstream `main`, then resolve.
 
 ## Differentiator
 

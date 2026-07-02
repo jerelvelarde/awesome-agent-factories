@@ -202,9 +202,9 @@ Input/output validation, prompt-injection defense, and PII handling for agents.
 
 Worked examples built in this repo, each a *group of agents on harnesses that produces one type of artifact*. The reference stack is deepagents for the harness and orchestration and CopilotKit for the UI. Each ships a requirement doc and a build plan.
 
-- [Software Development Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/software-development-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new software: a reviewed, tested draft pull request.
-- [Content Creation Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/content-creation-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new content: publish-ready pieces plus channel variants.
-- [Sales Proposal Factory](https://github.com/breadoncee/awesome-agent-factories/blob/main/factories/sales-proposal-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new proposals: tailored, priced, and compliance-checked.
+- [Software Development Factory](https://github.com/jerelvelarde/awesome-agent-factories/blob/main/factories/software-development-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new software: a reviewed, tested draft pull request.
+- [Content Creation Factory](https://github.com/jerelvelarde/awesome-agent-factories/blob/main/factories/content-creation-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new content: publish-ready pieces plus channel variants.
+- [Sales Proposal Factory](https://github.com/jerelvelarde/awesome-agent-factories/blob/main/factories/sales-proposal-factory/BUILD_PLAN.md) - Blueprint for a factory that produces new proposals: tailored, priced, and compliance-checked.
 
 ## Related Lists
 
